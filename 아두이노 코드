@@ -11,18 +11,18 @@ const char* password = "00000000";
 // ===========================
 // DHT 설정
 // ===========================
-#define DHTPIN 10         // DHT11 핀
-#define DHTTYPE DHT11     // DHT 센서 타입
+#define DHTPIN 10         // DHT11 센서가 연결된 아두이노 핀 번호를 10번으로 지정
+#define DHTTYPE DHT11     //사용할 센서 종류를 DHT11으로 지정
 DHT dht(DHTPIN, DHTTYPE);
 
 // ===========================
 // HTTP 서버
 // ===========================
-WebServer server(80);
+WebServer server(80); //80번 포트로 웹서버 실행
 
 // JSON 반환 핸들러
 void handleSensorData() {
-  float temperature = dht.readTemperature();
+  float temperature = dht.readTemperature(); // 온도와습도 값을 센서에서 읽어오는코드
   float humidity = dht.readHumidity();
 
   if (isnan(temperature) || isnan(humidity)) {
@@ -31,11 +31,11 @@ void handleSensorData() {
   }
 
   String json = "{";
-  json += "\"temperature\":" + String(temperature) + ",";
+  json += "\"temperature\":" + String(temperature) + ","; //온도와 습도 값을 JSON 형식의 문자열로 만듭니다.
   json += "\"humidity\":" + String(humidity);
   json += "}";
 
-  server.sendHeader("Access-Control-Allow-Origin", "*");  // CORS 허용
+  server.sendHeader("Access-Control-Allow-Origin", "*");  // CORS 정책을 허용해, 다른 도메인에서도 이 데이터를 요청할 수 있게 만듭니다.
   server.send(200, "application/json", json);
 }
 
@@ -43,15 +43,15 @@ void setup() {
   Serial.begin(115200);
   dht.begin();
 
-  WiFi.begin(ssid, password);
-  Serial.print("WiFi 연결 중");
+  WiFi.begin(ssid, password);  // 이코드는 ESP32가 무선 인터넷(Wi-Fi)에 연결되도록 설정합니다
+  Serial.print("WiFi 연결 중"); 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\n✅ WiFi 연결됨: " + WiFi.localIP().toString());
 
-  server.on("/data", handleSensorData);
+  server.on("/data", handleSensorData); //사용자가 /data 주소로 접속했을 때 실행할 함수를 지정합니다.
   server.begin();
   Serial.println("🌐 웹서버 실행 중...");
 }
