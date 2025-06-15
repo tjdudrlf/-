@@ -1,0 +1,61 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DHT.h>
+
+// ===========================
+// Wi-Fi 정보
+// ===========================
+const char* ssid = "dudrlf";
+const char* password = "00000000";
+
+// ===========================
+// DHT 설정
+// ===========================
+#define DHTPIN 10         // DHT11 핀
+#define DHTTYPE DHT11     // DHT 센서 타입
+DHT dht(DHTPIN, DHTTYPE);
+
+// ===========================
+// HTTP 서버
+// ===========================
+WebServer server(80);
+
+// JSON 반환 핸들러
+void handleSensorData() {
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  if (isnan(temperature) || isnan(humidity)) {
+    server.send(500, "application/json", "{\"error\":\"Sensor read failed\"}");
+    return;
+  }
+
+  String json = "{";
+  json += "\"temperature\":" + String(temperature) + ",";
+  json += "\"humidity\":" + String(humidity);
+  json += "}";
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");  // CORS 허용
+  server.send(200, "application/json", json);
+}
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+
+  WiFi.begin(ssid, password);
+  Serial.print("WiFi 연결 중");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ WiFi 연결됨: " + WiFi.localIP().toString());
+
+  server.on("/data", handleSensorData);
+  server.begin();
+  Serial.println("🌐 웹서버 실행 중...");
+}
+
+void loop() {
+  server.handleClient();
+}
